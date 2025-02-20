@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "712163739879",
+    "project_id": "appointment-ed3bc",
+    "storage_bucket": "appointment-ed3bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712163739879:android:952fafbd506938ff69ba42",
+        "android_client_info": {
+          "package_name": "com.example.appointement"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYmmUxMMyyT8TqPw01VhYZUn9UuKhbJAA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
