@@ -188,6 +188,12 @@ class _Appointments extends State<Appointments> {
     );
   }
 
+  /*
+  Future<void> _selectOnlineContact() async {
+    if 
+  }
+  */
+
   void saveAppointmentToFirestore() async {
     try {
       final firestore = FirebaseFirestore.instance;

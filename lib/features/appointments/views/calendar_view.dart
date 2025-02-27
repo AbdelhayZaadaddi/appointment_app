@@ -3,6 +3,8 @@ import 'package:appointement/features/appointments/views/next_day_appointments.d
 import 'package:appointement/features/appointments/widgets/CalenderWidget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// ignore: depend_on_referenced_packages
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
 class CalendarView extends StatefulWidget {
@@ -19,10 +21,11 @@ class _CalendarViewState extends State<CalendarView> {
   final ScrollController _scrollController = ScrollController();
   DateTime selectedDate = DateTime.now();
   DateTime? _lastNavigatedDate;
+  int unreadCount = 0;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   FirebaseAuth _auth = FirebaseAuth.instance;
-  String? UserName;
+  String? userName;
   DateTime displayedWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
   DateTime focusedWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)); 
   
@@ -38,22 +41,41 @@ class _CalendarViewState extends State<CalendarView> {
   }
 
   void loadUserData() async {
-    User? user = _auth.currentUser;
+  try {
+    //User? user = _auth.currentUser;
     Map<String, dynamic>? userData = await getUserData();
     if (userData != null) {
       setState(() {
-        UserName = userData['name'] ?? '';
+        userName = userData['name'] ?? '';
       });
     } else {
       print("User data not found");
     }
+  } catch (e) {
+    print("Error loading user data: $e");
   }
+}
 
   @override
   void initState() {
     super.initState();
     loadUserData();
     _scrollController.addListener(_handleScroll);
+    fetchUnreadCount();
+  }
+
+  void fetchUnreadCount() {
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('receiverId', isEqualTo: currentUserId)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        unreadCount = snapshot.docs.length;
+      });
+    });
   }
 
   @override
@@ -72,6 +94,7 @@ class _CalendarViewState extends State<CalendarView> {
 
   final scrollableBox = _scrollController.position.context.storageContext.findRenderObject() as RenderBox;
   final viewportTop = _scrollController.offset;
+  final viewportBottom = viewportTop + _scrollController.position.viewportDimension;
 
   for (String dateStr in nextDaysState.formattedDates) {
     final key = nextDaysState.dayKeys[dateStr];
@@ -81,13 +104,16 @@ class _CalendarViewState extends State<CalendarView> {
     final position = renderBox.localToGlobal(Offset.zero, ancestor: scrollableBox);
 
     final widgetTop = position.dy;
+    final widgetBottom = widgetTop + renderBox.size.height;
 
-    final distance = (widgetTop - viewportTop).abs();
+    if (widgetTop >= viewportTop && widgetBottom <= viewportBottom) {
+      final distance = (widgetTop - viewportTop).abs();
 
-    if (distance < minDistance) {
-      minDistance = distance;
-      final index = nextDaysState.formattedDates.indexOf(dateStr);
-      closestDate = nextDaysState.dateTimes[index];
+      if (distance < minDistance) {
+        minDistance = distance;
+        final index = nextDaysState.formattedDates.indexOf(dateStr);
+        closestDate = nextDaysState.dateTimes[index];
+      }
     }
   }
 
@@ -103,21 +129,35 @@ class _CalendarViewState extends State<CalendarView> {
 
 
   void _handleManualNavigation(DateTime date) {
-    final newWeekStart = date.subtract(Duration(days: date.weekday - 1));
-    setState(() {
-      _lastNavigatedDate = newWeekStart;
-      displayedWeekStart = newWeekStart;
-      selectedDate = date;
-    });
-  }
+  final newWeekStart = date.subtract(Duration(days: date.weekday - 1));
+  setState(() {
+    _lastNavigatedDate = newWeekStart;
+    displayedWeekStart = newWeekStart;
+    selectedDate = date;
+  });
 
-  // ... rest of user data loading and other methods remain unchanged ...
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final nextDaysState = _nextDaysKey.currentState;
+    if (nextDaysState != null) {
+      String formattedDate = DateFormat('E d').format(date);
+      GlobalKey? key = nextDaysState.dayKeys[formattedDate];
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+      }
+    }
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // ... existing appBar code ...
         title: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -139,7 +179,7 @@ class _CalendarViewState extends State<CalendarView> {
             */
             SizedBox(width: 10),
             Text(
-              "${UserName}",
+              "${userName}",
               style: TextStyle(color: Colors.black54),
             ),
           ],
@@ -155,12 +195,40 @@ class _CalendarViewState extends State<CalendarView> {
             ),
             icon: Icon(Icons.add, color: Colors.black54,)
           ),
-          IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.notificationPage);
-              },
-              icon: Icon(Icons.notification_important_sharp, color: Colors.black54)
-          )
+          Stack(
+            children: [
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.notificationPage);
+                },
+                icon: Icon(Icons.notification_important_sharp, color: Colors.black54),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 22,
+                  top: 11,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 13,
+                      minHeight: 13,
+                    ),
+                    child: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
       body: Column(
@@ -168,28 +236,28 @@ class _CalendarViewState extends State<CalendarView> {
           WeekCalendarPage(
             selectedDate: selectedDate,
             onDateSelected: (date) {
-              // Optional: Handle date selection (if needed)
+              _handleManualNavigation(date);
             },
             onWeekNavigated: (date) {
-              _handleManualNavigation(date); // Use the new function
+              _handleManualNavigation(date);
             },
           ),
           Expanded(
-  child: SizedBox( // Add constrained height
-    height: MediaQuery.of(context).size.height * 0.6, // Adjust as needed
-    child: SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
-        children: [
-          NextDaysAppointments(
-            key: _nextDaysKey,
-            week: _lastNavigatedDate ?? displayedWeekStart,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6, 
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  children: [
+                    NextDaysAppointments(
+                      key: _nextDaysKey,
+                      week: _lastNavigatedDate ?? displayedWeekStart,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
-    ),
-  ),
-),
         ],
       ),
     );

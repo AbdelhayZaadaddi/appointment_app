@@ -1,5 +1,6 @@
 import 'package:appointement/config/routes/routes.dart';
 import 'package:appointement/features/appointments/views/add_apointment.dart';
+import 'package:appointement/features/appointments/views/appointments.dart';
 import 'package:appointement/features/appointments/views/edit_appointments.dart';
 import 'package:appointement/features/auth/views/edit_profile.dart';
 import 'package:appointement/features/auth/views/login_email.dart';

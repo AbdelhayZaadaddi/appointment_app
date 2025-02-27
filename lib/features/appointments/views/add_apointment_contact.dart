@@ -14,7 +14,7 @@ class AddApointmentContact extends StatefulWidget {
 
   final String? contact;
 
-  const AddApointmentContact({
+  const AddApointmentContact(String displayName, {
     super.key,
     this.contact,
   });

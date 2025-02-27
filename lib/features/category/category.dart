@@ -170,50 +170,58 @@ class _CategoryState extends State<Category> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
+              padding: EdgeInsets.only(left: 7, right: 7),
               child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: "Enter category name",
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        hintStyle: TextStyle(color: Colors.grey[400]),
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText: "Enter category name",
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                              width: 0.5
+                            )
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                              width: 0.9
+                            )
+                          )
+                        ),
                       ),
                     ),
-                  ),
-                  Material(
-                    color: Colors.blueAccent,
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
+                    SizedBox(
+                      width: 5,
                     ),
-                    child: IconButton(
-                      icon: _isLoading
-                          ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                          : const Icon(Icons.add, color: Colors.white),
-                      onPressed: _isLoading ? null : _addCategory,
-                    ),
-                  ),
-                ],
-              ),
+                    Material(
+                      color: Colors.lightBlueAccent,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12)
+                      ),
+                      child: IconButton(
+                        icon: _isLoading
+                            ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                            : const Icon(Icons.add, color: Colors.white),
+                        onPressed: _isLoading ? null : _addCategory,
+                      ),
+                    )
+                  ],
+                ),
             ),
+          SizedBox(
+            height: 10,
           ),
           Expanded(
             child: StreamBuilder(
@@ -243,7 +251,7 @@ class _CategoryState extends State<Category> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     final doc = snapshot.data!.docs[index];

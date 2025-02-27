@@ -53,10 +53,9 @@ void didUpdateWidget(WeekCalendarPage oldWidget) {
     widget.onDateSelected?.call(date);
   }
 
-  // ... rest of the calendar widget code remains unchanged ...
   void _nextWeek() {
   setState(() {
-    startOfWeek = startOfWeek.add(const Duration(days: 7)); // Update startOfWeek
+    startOfWeek = startOfWeek.add(const Duration(days: 7));
     _lastNavigatedDate = startOfWeek;
   });
   widget.onWeekNavigated?.call(startOfWeek);
@@ -64,7 +63,7 @@ void didUpdateWidget(WeekCalendarPage oldWidget) {
 
 void _previousWeek() {
   setState(() {
-    startOfWeek = startOfWeek.subtract(const Duration(days: 7)); // Update startOfWeek
+    startOfWeek = startOfWeek.subtract(const Duration(days: 7));
     _lastNavigatedDate = startOfWeek;
   });
   widget.onWeekNavigated?.call(startOfWeek);
@@ -106,9 +105,9 @@ void _previousWeek() {
             onPressed: () => _selectDate(date),
             style: TextButton.styleFrom(
               backgroundColor: isSelected
-                  ? Colors.blue
+                  ? Colors.lightBlueAccent
                   : isToday
-                      ? Colors.blue.withOpacity(0.1)
+                      ? Colors.lightBlueAccent.withOpacity(0.1)
                       : Colors.transparent,
               shape: const CircleBorder(),
               padding: const EdgeInsets.all(10),
@@ -119,7 +118,7 @@ void _previousWeek() {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.white : isToday ? Colors.blue : Colors.black,
+                color: isSelected ? Colors.white : isToday ? Colors.lightBlueAccent : Colors.black,
               ),
             ),
           ),

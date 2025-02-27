@@ -39,6 +39,7 @@ class _ContactViewState extends State<ContactView> {
     setState(() {
       searchedUser = null;
     });
+    phoneController.clear();
   } else {
     print("No user found to add.");
   }
@@ -68,39 +69,52 @@ class _ContactViewState extends State<ContactView> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              margin: EdgeInsets.all(10),
-              child: TextField(
-                controller: phoneController,
-                decoration: InputDecoration(
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search, size: 15),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.grey,
-                      width: 0.5
+            Padding(
+              padding: EdgeInsets.only(left: 7, right: 7),
+              child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: phoneController,
+                        decoration: InputDecoration(
+                          hintText: "Search",
+                          prefixIcon: Icon(Icons.search, size: 15,),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                              width: 0.5
+                            )
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                              width: 0.9
+                            )
+                          )
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Material(
+                      color: Colors.lightBlueAccent,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12)
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.search, color: Colors.white,),
+                        onPressed: (){
+                          searchContact(context, phoneController);
+                        },
+                      ),
                     )
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.grey,
-                      width: 0.9
-                    )
-                  ),
-                  contentPadding: EdgeInsets.all(8)
+                  ],
                 ),
-                style: TextStyle(fontSize: 15),
-              ),
             ),
-
-            TextButton(
-              child: Text("Search"),
-              onPressed: () {
-                searchContact(context, phoneController);
-              },
-            ),
-
-            // Display the user data if found
+            
+          
             if (searchedUser != null)
               Container(
                 child: ListTile(
@@ -119,7 +133,12 @@ class _ContactViewState extends State<ContactView> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: (){},
+                        onPressed: (){
+                          phoneController.clear();
+                          setState(() {
+                            searchedUser = null;
+                          });
+                        },
                       ),
                     ],
                   ),

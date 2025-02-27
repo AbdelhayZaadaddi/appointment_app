@@ -231,7 +231,6 @@ class _AddContactState extends State<AddContact> {
             ),
             SizedBox(height: 20),
 
-            // Display Search Results
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -253,7 +252,6 @@ class _AddContactState extends State<AddContact> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white
                           ),
-                     
                         ),
                       ),
                     );

@@ -14,7 +14,7 @@ class EditAppointments extends StatefulWidget {
 }
 
 class _EditAppointmentsState extends State<EditAppointments> {
-  late String docId; // Document ID
+  late String docId;
   late Map<String, dynamic> appointmentData = {};
   bool isFetched = false;
 
@@ -65,10 +65,8 @@ class _EditAppointmentsState extends State<EditAppointments> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Retrieve the document ID passed from the previous screen
     docId = ModalRoute.of(context)!.settings.arguments as String;
 
-    // Fetch the appointment data from Firestore
     if (docId.isNotEmpty && !isFetched){
        _fetchAppointmentData();
        isFetched = true;
@@ -191,10 +189,8 @@ class _EditAppointmentsState extends State<EditAppointments> {
     );
   }
 
-  // Function to fetch and display contacts
   Future<void> _selectContact() async {
     if (!await FlutterContacts.requestPermission()) {
-      // Permission denied
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -211,10 +207,8 @@ class _EditAppointmentsState extends State<EditAppointments> {
       return;
     }
 
-    // Fetch contacts
     final contacts = await FlutterContacts.getContacts(withProperties: true);
 
-    // Show contacts in bottom sheet
     showModalBottomSheet(
       context: context,
       builder: (context) => ListView.builder(
@@ -225,7 +219,7 @@ class _EditAppointmentsState extends State<EditAppointments> {
             title: Text(contact.displayName),
             onTap: () {
               setState(() {
-                selectedContact = contact.displayName; // Save selected contact
+                selectedContact = contact.displayName;
               });
               Navigator.pop(context);
             },
@@ -245,7 +239,6 @@ class _EditAppointmentsState extends State<EditAppointments> {
         return;
       }
 
-      // Data to save
       final updatedAppointmentData = {
         "title": selectedMeetingType,
         "meetingType": selectedMeetingType,
@@ -254,7 +247,7 @@ class _EditAppointmentsState extends State<EditAppointments> {
         "time": selectedTime,
         "location": selectedLocationType,
         "category": selectedCategorieType,
-        "status": selectedStatus, // Add the selected status
+        "status": selectedStatus,
         "UpdatedAt": FieldValue.serverTimestamp(),
         'reminderPreference': _reminderPreference,
       };

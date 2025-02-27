@@ -1,6 +1,7 @@
 import 'package:appointement/config/routes/routes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
 class LoginView extends StatefulWidget {
@@ -99,7 +100,11 @@ class _LoginViewState extends State<LoginView> {
           _isLoading = false;
         });
         _showSuccess('Login successful!');
-        Navigator.of(context).pushReplacementNamed(AppRoutes.homePageRoute);
+        //Navigator.of(context).pushReplacementNamed(AppRoutes.homePageRoute);
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.homePageRoute,
+          (Route<dynamic> route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -154,7 +159,7 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 20),
                 // Welcome Text
                 Text(
-                  _isCodeSent ? 'Enter OTP' : 'Welcome Back',
+                  _isCodeSent ? 'Enter OTP' : 'Welcome',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: Colors.blue,
                     fontWeight: FontWeight.bold,
@@ -187,12 +192,15 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          //borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.blue),
+                          //borderSide: const BorderSide(color: Colors.blue),
+                          borderSide: BorderSide.none,
                         ),
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -200,7 +208,19 @@ class _LoginViewState extends State<LoginView> {
                       onChanged: (phone) {
                         _phoneNumber = phone.completeNumber;
                       },
-                    ),
+                      pickerDialogStyle: PickerDialogStyle(
+                        backgroundColor: Colors.white,
+                        countryNameStyle: const TextStyle(color: Colors.black),
+                        countryCodeStyle: const TextStyle(color: Colors.black),
+                        searchFieldCursorColor: Colors.blue,
+                        searchFieldInputDecoration: InputDecoration(
+                          hintText: 'Search country',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                    )
                   ),
                 if (_isCodeSent) ...[
                   TextField(
@@ -211,6 +231,7 @@ class _LoginViewState extends State<LoginView> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      floatingLabelBehavior: FloatingLabelBehavior.never,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey[300]!),
@@ -255,7 +276,7 @@ class _LoginViewState extends State<LoginView> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      // strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )

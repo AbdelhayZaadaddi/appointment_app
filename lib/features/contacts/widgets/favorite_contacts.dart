@@ -1,7 +1,8 @@
+import 'package:appointement/features/appointments/views/add_apointment_contact.dart';
+import 'package:appointement/features/appointments/views/add_apointment_with_contact.dart';
 import 'package:appointement/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -126,22 +127,6 @@ class _FavoriteContactsState extends State<FavoriteContacts> {
     prefs.setString('favoriteContacts', jsonEncode(favContactsData));
   }
 
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not launch phone dialer for $phoneNumber'),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,11 +189,19 @@ class _FavoriteContactsState extends State<FavoriteContacts> {
                   subtitle: Text(
                     contact.phones.isNotEmpty ? contact.phones.first.number : 'No Phone Number',
                   ),
+
                   trailing: IconButton(
                     onPressed: contact.phones.isNotEmpty
-                        ? () => _makePhoneCall(contact.phones.first.number)
+                        ? () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddAppointmentsWithContact(
+                              contact: contact.displayName,
+                            ),
+                          ),
+                        )
                         : null,
-                    icon: const Icon(Icons.call),
+                    icon: const Icon(Icons.add, color: Colors.black54,),
                   ),
                 );
               },

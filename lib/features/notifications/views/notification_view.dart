@@ -128,7 +128,7 @@ class _NotificationViewState extends State<NotificationView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: TAppTheme.lightTheme.scaffoldBackgroundColor,
+        backgroundColor: Colors.white,
       ),
       body: Container(
         color: Colors.white,

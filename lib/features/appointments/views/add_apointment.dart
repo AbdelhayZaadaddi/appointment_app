@@ -29,7 +29,14 @@ class _AddAppointment extends State<AddAppointment> {
   final NotiService notiService = NotiService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    String? userName;
+  String? userName;
+
+
+  List<String> selectedContacts = [];
+  List<String> selectedContactIds = [];
+  List<QueryDocumentSnapshot> firebaseContacts = [];
+  List<Map<String, dynamic>> selectedFriends = []; // Stores {id, name}
+
 
   final List<String> meetingTypes = [
     "Business Meeting",
@@ -177,7 +184,7 @@ class _AddAppointment extends State<AddAppointment> {
   }
 
 
-  // Function to fetch and display contacts
+  /*
   Future<void> _selectContact() async {
     if (!await FlutterContacts.requestPermission()) {
       showDialog(
@@ -217,6 +224,7 @@ class _AddAppointment extends State<AddAppointment> {
       ),
     );
   }
+  */
 
   void loadUserData() async {
     User? user = _auth.currentUser;
@@ -240,6 +248,10 @@ class _AddAppointment extends State<AddAppointment> {
       final firestore = FirebaseFirestore.instance;
       final user = FirebaseAuth.instance.currentUser;
       final uuid = Uuid();
+      List<String> friendIds = selectedFriends.map((f) => f['id'] as String).toList();
+      List<String> friendNames = selectedFriends
+    .map((f) => (f['name']?.toString() ?? 'Unnamed'))
+    .toList();
 
       print(widget.id);
 
@@ -254,7 +266,7 @@ class _AddAppointment extends State<AddAppointment> {
         "title": selectedMeetingType,
         "meetingType": selectedMeetingType,
         "from": userName,
-        "contact": selectedContact,
+        //"contact": selectedContact,
         "date": selectedDate,
         "time": selectedTime,
         "location": selectedLocationType,
@@ -263,20 +275,27 @@ class _AddAppointment extends State<AddAppointment> {
         "createdAt": FieldValue.serverTimestamp(),
         "userId": user.uid,
         'reminderPreference': _reminderPreference,
-        'contactId': widget.id, 
+        //'contactId': widget.id, 
+        //"contacts": selectedContacts,
+        //"contactIds": selectedContactIds,
+        "contactsId": friendIds,
+        "contacts": friendNames,
+       // "userId": user.uid,
       };
 
       await firestore.collection("appointments").add(appointmentData);
 
       // send the notification
-      await FirebaseFirestore.instance.collection('notifications').add({
-        'receiverId' : widget.id,
-        'senderId': user.uid,
-        'type': 'New Appointment',
-        'message': 'You have a new Appointment scudeld',
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      for (String friendId in friendIds) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'receiverId': friendId,
+          'senderId': user.uid,
+          'type': 'New Appointment',
+          'message': '${userName ?? "Someone"} invited you to a meeting',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+      }
 
       // success message
       _showSuccess("Appointment created successfully!");
@@ -338,13 +357,157 @@ class _AddAppointment extends State<AddAppointment> {
   }
 
 
+  List<Map<String, dynamic>> friendsList = [];
+
+  // Add loading state
+  bool isLoadingFriends = false;
+
+  Future<void> getFriends() async {
+  try {
+    setState(() => isLoadingFriends = true);
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (!userSnapshot.exists || userSnapshot.data()?['friends'] == null) {
+      setState(() => isLoadingFriends = false);
+      return;
+    }
+
+    final friendIds = List<String>.from(userSnapshot.data()?['friends']);
+    print('Found ${friendIds.length} friend IDs');
+
+    List<Map<String, dynamic>> fetchedFriends = await Future.wait(
+      friendIds.map((id) async {
+        try {
+          final friendSnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(id)
+              .get();
+
+          if (!friendSnapshot.exists) {
+            return {'id': id, 'name': 'Deleted User'};
+          }
+
+          final data = friendSnapshot.data()!;
+          return {
+            'id': id,
+            'name': _safeGetString(data, 'name') ?? 'Unnamed',
+            'profilePic': _safeGetString(data, 'profilePic'),
+          };
+        } catch (e) {
+          print('Error fetching friend $id: $e');
+          return {'id': id, 'name': 'Error loading'};
+        }
+      }),
+    );
+
+    setState(() {
+      friendsList = fetchedFriends.where((f) => f['name'] != null).toList();
+      isLoadingFriends = false;
+    });
+  } catch (e) {
+    print("Error fetching friends: $e");
+    setState(() => isLoadingFriends = false);
+  }
+}
+
+String? _safeGetString(Map<String, dynamic> data, String key) {
+  final value = data[key];
+  if (value is String) return value;
+  return null;
+}
+
+String _getFriendName(Map<String, dynamic> friend) {
+  final name = friend['name'];
+  if (name is String) return name;
+  if (name == null) return 'Unnamed';
+  return name.toString();
+}
+
+  void _selectContacts() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) => StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10)
+          ),
+          padding: const EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              const Text('Select Friends', style: TextStyle(fontSize: 20)),
+              if (isLoadingFriends)
+                const LinearProgressIndicator()
+              else if (friendsList.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No friends found'),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: friendsList.length,
+                    itemBuilder: (context, index) {
+                      final friend = friendsList[index];
+                      final isSelected = selectedFriends.any((f) => f['id'] == friend['id']);
+                      
+                      return CheckboxListTile(
+                        title: Text(friend['name']?.toString() ?? 'Unnamed',
+    style: TextStyle(
+      color: (friend['name']?.toString() ?? '').contains('Error') 
+        ? Colors.red 
+        : null
+    ),),
+                        secondary: friend['profilePic']?.isNotEmpty == true
+                            ? CircleAvatar(
+                                backgroundImage: NetworkImage(friend['profilePic']),
+                              )
+                            : const CircleAvatar(child: Icon(Icons.person)),
+                        value: isSelected,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value ?? false) {
+                              selectedFriends.add(friend);
+                            } else {
+                              selectedFriends.removeWhere((f) => f['id'] == friend['id']);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ButtonStyle(
+                  //backgroundColor: 
+                ),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    if (widget.contact != null){
-      selectedContact = widget.contact!;
-    }
+    getFriends().then((_) {
+      print('Friends list loaded with ${friendsList.length} items');
+    });
     loadUserData();
     fetchCategories();
   }
@@ -393,12 +556,12 @@ class _AddAppointment extends State<AddAppointment> {
                     readOnly: true,
                   ),
                   const SizedBox(height: 16.0),
-                  CustomTextField(
+                 CustomTextField(
                     label: "With",
-                    hintText: selectedContact.isEmpty
-                        ? "Select contact"
-                        : selectedContact,
-                    onTap: _selectContact,
+  hintText: selectedFriends.isEmpty
+      ? "Select friends"
+      : selectedFriends.map(_getFriendName).join(", "),
+                    onTap: _selectContacts,
                     readOnly: true,
                   ),
                   const SizedBox(height: 16.0),
@@ -501,8 +664,21 @@ class _AddAppointment extends State<AddAppointment> {
                       width: double.infinity,
                       child: CustomButton(
                         label: "Create Appointment",
+                        /*
                         onPressed: () {
                           if (selectedContact.isNotEmpty &&
+                              selectedDate.isNotEmpty &&
+                              selectedTime.isNotEmpty) {
+                            saveAppointmentToFirestore();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Please fill all fields")),
+                            );
+                          }
+                        },
+                        */
+                        onPressed: (){
+                          if (selectedFriends.isNotEmpty &&
                               selectedDate.isNotEmpty &&
                               selectedTime.isNotEmpty) {
                             saveAppointmentToFirestore();

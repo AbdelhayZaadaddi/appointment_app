@@ -52,17 +52,30 @@ class _FriendsState extends State<Friends> {
       stream: getFriends(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: Column(
+            children: [
+
+              LinearProgressIndicator(
+                backgroundColor: Colors.lightBlueAccent,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              SizedBox(height: 10,),
+              Text('Loading Contacts...'),
+            ],
+          ));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Column(
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.contacts_rounded, size: 100,),
-                Text('No Contacts found'),
+                //Icon(Icons.contacts_outlined, size: 100,),
+                SizedBox(
+                  height: 10,
+                ),
+                Text('No Contacts found!'),
               ],
-            ),
-          );
+            );
         }
 
         return SingleChildScrollView(

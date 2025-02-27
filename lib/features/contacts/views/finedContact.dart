@@ -1,3 +1,4 @@
+import 'package:appointement/config/routes/routes.dart';
 import 'package:appointement/features/contacts/views/searchContact.dart';
 import 'package:appointement/theme/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -107,6 +108,13 @@ class _Finedcontact extends State<Finedcontact> {
                   ),
                 )
               ),
+
+            TextButton(
+              onPressed: (){
+                Navigator.of(context).pushNamed(AppRoutes.TestContact);
+              },
+              child: Text('test'),
+            )
           ],
         ),
       ),
